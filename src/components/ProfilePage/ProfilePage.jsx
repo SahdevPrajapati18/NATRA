@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useAuth } from '../LoginPage/authHandler.jsx'; // Corrected Path
-import { db, appId } from '../LoginPage/firebase.jsx'; // Corrected Path
+import { useAuth } from '../LoginPage/authHandler.jsx';
+import { db, appId } from '../LoginPage/firebase.jsx';
+import { doc, getDoc } from 'firebase/firestore';
 import gsap from 'gsap';
 
 import './ProfilePage.css';
@@ -17,7 +18,6 @@ export default function EnhancedProfilePage({ onNavigate }) {
         loading: true
     });
 
-    // --- Fetch user stats from Firestore ---
     useEffect(() => {
         if (user && !user.isAnonymous && user.uid) {
             const fetchUserStats = async () => {
@@ -42,41 +42,45 @@ export default function EnhancedProfilePage({ onNavigate }) {
                     setProfileStats(prev => ({ ...prev, loading: false }));
                 }
             };
-            
             fetchUserStats();
         } else {
             setProfileStats(prev => ({ ...prev, loading: false }));
         }
     }, [user]);
 
-    // --- Animate the profile card on component mount with GSAP ---
     useEffect(() => {
         if (user && !loading && profileCardRef.current) {
             gsap.fromTo(
-                profileCardRef.current, 
-                { y: 50, opacity: 0 }, 
+                profileCardRef.current,
+                { y: 50, opacity: 0 },
                 { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out', delay: 0.2 }
             );
         }
     }, [user, loading]);
 
-    // --- Enhanced sign-out handler with GSAP ---
+    const animateSignOut = () => {
+        return new Promise(resolve => {
+            if (profileCardRef.current) {
+                gsap.to(profileCardRef.current, {
+                    y: -30,
+                    opacity: 0,
+                    duration: 0.5,
+                    ease: 'power2.in',
+                    onComplete: resolve
+                });
+            } else {
+                resolve();
+            }
+        });
+    };
+
     const handleSignOut = async () => {
         setIsSigningOut(true);
         try {
             const result = await signOutUser();
             if (result.success) {
-                if (profileCardRef.current) {
-                    gsap.to(profileCardRef.current, {
-                        y: -30,
-                        opacity: 0,
-                        duration: 0.5,
-                        ease: 'power2.in',
-                        onComplete: () => onNavigate('home')
-                    });
-                } else {
-                    onNavigate('home');
-                }
+                await animateSignOut();
+                onNavigate('home');
             } else {
                 console.error("Sign out failed:", result.error);
                 setIsSigningOut(false);
@@ -87,7 +91,6 @@ export default function EnhancedProfilePage({ onNavigate }) {
         }
     };
 
-    // --- Helper functions ---
     const getUserInitials = () => {
         if (user?.displayName) {
             return user.displayName
@@ -101,27 +104,23 @@ export default function EnhancedProfilePage({ onNavigate }) {
     };
 
     const formatMemberSince = () => {
-        if (user?.joined) {
-            return new Date(user.joined).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-        }
-        return 'Recently joined';
+        const date = user?.joined || user?.metadata?.creationTime;
+        return date ? new Date(date).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        }) : 'Recently joined';
     };
 
     const getMembershipTier = () => {
-        if (!user?.joined) return 'Ātman Tier';
-        const joinDate = new Date(user.joined);
+        const joinDate = user?.joined ? new Date(user.joined) : user?.metadata?.creationTime ? new Date(user.metadata.creationTime) : null;
+        if (!joinDate) return 'Ātman Tier';
         const monthsAsMember = Math.floor((Date.now() - joinDate.getTime()) / (1000 * 60 * 60 * 24 * 30));
-        
         if (monthsAsMember >= 12) return 'Brahman Tier';
         if (monthsAsMember >= 6) return 'Dharma Tier';
         return 'Ātman Tier';
     };
 
-    // --- Handle loading states for the main user object ---
     if (loading) {
         return (
             <div className="loading-screen">
@@ -134,7 +133,7 @@ export default function EnhancedProfilePage({ onNavigate }) {
     }
 
     if (!user || user.isAnonymous) {
-         return (
+        return (
             <div className="loading-screen">
                 <div className="loading-container">
                     <p>Please log in to view your profile.</p>
@@ -143,8 +142,9 @@ export default function EnhancedProfilePage({ onNavigate }) {
             </div>
         );
     }
-    
-    // --- Main component render ---
+
+    const lastLoginTime = user?.lastLogin || user?.metadata?.lastSignInTime;
+
     return (
         <div className="profile-page">
             <div className="profile-content">
@@ -243,7 +243,7 @@ export default function EnhancedProfilePage({ onNavigate }) {
                                 <div className="account-detail-item">
                                     <span className="detail-label">Last Login:</span>
                                     <span className="detail-value">
-                                        {user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Unknown'}
+                                        {lastLoginTime ? new Date(lastLoginTime).toLocaleString() : 'Unknown'}
                                     </span>
                                 </div>
                             </div>
