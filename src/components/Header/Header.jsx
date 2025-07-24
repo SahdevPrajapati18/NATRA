@@ -43,7 +43,7 @@ export default function Header({ onNavigate, user, theme, toggleTheme }) {
             <div className="header-container container">
                 <div className="header-logo" onClick={() => onNavigate('home')} role="button" tabIndex="0">
                     {/* Remember to import your logo file for this to work */}
-                    <img src="/src/assets/logo.png" alt="NATRA Logo" />
+                    <img src="/logo.png" alt="NATRA Logo" />
                 </div>
                 
                 <nav className="header-nav">
