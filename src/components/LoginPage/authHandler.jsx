@@ -77,7 +77,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const { user } = await signInWithPopup(auth, provider);
       const profile = await createUserProfileDocument(user);
-      return { success: true, user: profile };
+      return { success: true, user: home };
     } catch (err) {
       console.error("Google Sign-In Error:", err);
       let msg = "Failed to sign in with Google";
@@ -121,7 +121,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const { user } = await signInWithEmailAndPassword(auth, email, password);
       const profile = await createUserProfileDocument(user);
-      return { success: true, user: profile };
+      return { success: true, user: home };
     } catch (err) {
       console.error("Email Sign-In Error:", err);
       const msgMap = {
