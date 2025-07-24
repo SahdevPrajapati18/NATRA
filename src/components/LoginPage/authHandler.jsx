@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useMemo, } from "react";
+import React, { useState, useEffect, createContext, useContext } from 'react';
 import {
     auth,
     db,
@@ -8,199 +8,222 @@ import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     updateProfile,
-    sendPasswordResetEmail,
     onAuthStateChanged,
     signOut,
-    signInAnonymously, // Ensure signInAnonymously is imported
+    signInAnonymously,
     doc,
     setDoc,
-    getDoc,
-} from "./firebase.jsx"; // Corrected file extension
+    getDoc
+} from './firebase.jsx';
 
-// --- CONTEXT ---
+// --- AUTHENTICATION CONTEXT ---
 const AuthContext = createContext();
+
+// --- CUSTOM HOOK ---
 export const useAuth = () => {
     const context = useContext(AuthContext);
-    if (!context) throw new Error("useAuth must be used within an AuthProvider");
+    if (!context) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
     return context;
 };
 
-// --- PROVIDER ---
+// --- AUTHENTICATION PROVIDER COMPONENT ---
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const clearError = () => setError(null);
-
-    // --- USER PROFILE SETUP ---
+    // Helper function to create/update user profile document in Firestore
     const createUserProfileDocument = async (user, additionalData = {}) => {
         if (!user) return;
+        
         const userRef = doc(db, `artifacts/${appId}/users`, user.uid);
-        const snapshot = await getDoc(userRef);
+        
+        try {
+            const snapshot = await getDoc(userRef);
+            
+            if (!snapshot.exists()) {
+                const { displayName, email, photoURL, uid } = user;
 
-        const { displayName, email, photoURL, uid } = user;
-        let finalDisplayName =
-            additionalData.displayName ||
-            displayName ||
-            (email ? email.split("@")[0] : "");
+                // Create a display name from email if one doesn't exist
+                let finalDisplayName = additionalData.displayName || displayName;
+                if (!finalDisplayName && email) {
+                    const emailName = email.split('@')[0];
+                    finalDisplayName = emailName.charAt(0).toUpperCase() + emailName.slice(1);
+                }
 
-        if(finalDisplayName) {
-            finalDisplayName =
-                finalDisplayName.charAt(0).toUpperCase() + finalDisplayName.slice(1);
-        }
-
-        const baseProfile = {
-            uid,
-            displayName: finalDisplayName,
-            email,
-            photoURL,
-            joined: new Date().toISOString(),
-            lastLogin: new Date().toISOString(),
-            ...additionalData,
-        };
-
-        if (!snapshot.exists()) {
-            await setDoc(userRef, baseProfile);
-            return baseProfile;
-        } else {
-            await setDoc(
-                userRef,
-                { lastLogin: new Date().toISOString() },
-                { merge: true }
-            );
-            return { uid: user.uid, ...snapshot.data() };
+                const userProfile = {
+                    uid,
+                    displayName: finalDisplayName,
+                    email,
+                    photoURL,
+                    joined: new Date().toISOString(),
+                    lastLogin: new Date().toISOString(),
+                    ...additionalData,
+                };
+                await setDoc(userRef, userProfile);
+                return userProfile;
+            } else {
+                await setDoc(userRef, { lastLogin: new Date().toISOString() }, { merge: true });
+                return { uid: user.uid, ...snapshot.data() };
+            }
+        } catch (err) {
+            console.error("Error managing user profile:", err);
+            setError("Failed to manage user profile");
+            throw err;
         }
     };
 
-    // --- AUTH METHODS ---
+    // Google Sign-In
     const signInWithGoogle = async () => {
-        clearError();
+        setError(null);
         const provider = new GoogleAuthProvider();
-
         try {
-            const { user } = await signInWithPopup(auth, provider);
-            const profile = await createUserProfileDocument(user);
-            return { success: true, user: profile };
+            const result = await signInWithPopup(auth, provider);
+            const userProfile = await createUserProfileDocument(result.user);
+            return { success: true, user: userProfile };
         } catch (err) {
-            console.error("Google Sign-In Error:", err);
-            let msg = "Failed to sign in with Google";
-            if (err.code === "auth/popup-closed-by-user") msg = "Sign-in cancelled";
-            if (err.code === "auth/popup-blocked")
-                msg = "Popup blocked. Please allow popups and try again.";
-            setError(msg);
-            return { success: false, error: msg };
+            console.error("Google sign-in error:", err);
+            let errorMessage = "Failed to sign in with Google";
+            if (err.code === 'auth/popup-closed-by-user') {
+                errorMessage = "Sign-in cancelled";
+            } else if (err.code === 'auth/popup-blocked') {
+                errorMessage = "Popup blocked. Please allow popups and try again.";
+            }
+            setError(errorMessage);
+            return { success: false, error: errorMessage };
         }
     };
 
+    // Email/Password Sign-Up
     const signUpWithEmail = async (email, password, firstName, lastName) => {
-        clearError();
+        setError(null);
         if (password.length < 6) {
-            const msg = "Password must be at least 6 characters";
-            setError(msg);
-            return { success: false, error: msg };
+            const errorMessage = "Password should be at least 6 characters";
+            setError(errorMessage);
+            return { success: false, error: errorMessage };
         }
-
         try {
-            const { user } = await createUserWithEmailAndPassword(auth, email, password);
+            const { user: authUser } = await createUserWithEmailAndPassword(auth, email, password);
             const displayName = `${firstName} ${lastName}`.trim();
-            await updateProfile(user, { displayName });
-            const profile = await createUserProfileDocument(user, { displayName });
-            return { success: true, user: profile };
+            await updateProfile(authUser, { displayName });
+            const userProfile = await createUserProfileDocument(authUser, { displayName });
+            return { success: true, user: userProfile };
         } catch (err) {
-            console.error("Email Sign-Up Error:", err);
-            const msgMap = {
-                "auth/email-already-in-use": "This email is already registered. Please log in.",
-                "auth/invalid-email": "Invalid email address",
-                "auth/weak-password": "Password is too weak",
-            };
-            const msg = msgMap[err.code] || "Failed to create account. Try again.";
-            setError(msg);
-            return { success: false, error: msg };
+            console.error("Email sign-up error:", err);
+            let errorMessage;
+            switch (err.code) {
+                case 'auth/email-already-in-use':
+                    errorMessage = "This email is already registered. Please log in.";
+                    break;
+                case 'auth/invalid-email':
+                    errorMessage = "Invalid email address";
+                    break;
+                case 'auth/weak-password':
+                    errorMessage = "Password is too weak";
+                    break;
+                default:
+                    errorMessage = "Failed to create account. Please try again.";
+            }
+            setError(errorMessage);
+            return { success: false, error: errorMessage };
         }
     };
 
+    // Email/Password Sign-In
     const signInWithEmail = async (email, password) => {
-        clearError();
+        setError(null);
         try {
-            const { user } = await signInWithEmailAndPassword(auth, email, password);
-            const profile = await createUserProfileDocument(user);
-            return { success: true, user: profile };
+            const { user: authUser } = await signInWithEmailAndPassword(auth, email, password);
+            const userProfile = await createUserProfileDocument(authUser);
+            return { success: true, user: userProfile };
         } catch (err) {
-            console.error("Email Sign-In Error:", err);
-            const msgMap = {
-                "auth/user-not-found": "Invalid email or password.",
-                "auth/wrong-password": "Invalid email or password.",
-                "auth/invalid-credential": "Invalid credentials.",
-                "auth/too-many-requests": "Too many attempts. Try again later.",
-                "auth/user-disabled": "This account has been disabled.",
-            };
-            const msg = msgMap[err.code] || "Failed to sign in. Please try again.";
-            setError(msg);
-            return { success: false, error: msg };
+            console.error("Email sign-in error:", err);
+            let errorMessage;
+            switch (err.code) {
+                case 'auth/user-not-found':
+                case 'auth/wrong-password':
+                case 'auth/invalid-credential':
+                    errorMessage = "Invalid email or password. Please try again.";
+                    break;
+                case 'auth/too-many-requests':
+                    errorMessage = "Too many failed attempts. Please try again later.";
+                    break;
+                case 'auth/user-disabled':
+                    errorMessage = "This account has been disabled.";
+                    break;
+                default:
+                    errorMessage = "Failed to sign in. Please try again.";
+            }
+            setError(errorMessage);
+            return { success: false, error: errorMessage };
         }
     };
 
+    // Sign Out
     const signOutUser = async () => {
+        setError(null);
         try {
             await signOut(auth);
-            setUser(null); // This will trigger onAuthStateChanged to sign in anonymously
             return { success: true };
         } catch (err) {
             console.error("Sign-out error:", err);
-            setError("Failed to sign out");
-            return { success: false, error: "Failed to sign out" };
+            const errorMessage = "Failed to sign out";
+            setError(errorMessage);
+            return { success: false, error: errorMessage };
         }
     };
 
-    const resetPassword = async (email) => {
-        clearError();
-        try {
-            await sendPasswordResetEmail(auth, email);
-            return { success: true, message: "Password reset email sent!" };
-        } catch (err) {
-            console.error("Reset Password Error:", err);
-            const msgMap = {
-                "auth/user-not-found": "No account found with this email.",
-                "auth/invalid-email": "Invalid email address.",
-            };
-            const msg = msgMap[err.code] || "Failed to send reset email.";
-            setError(msg);
-            return { success: false, error: msg };
-        }
+    // Check if user is authenticated (and not an anonymous guest)
+    const isAuthenticated = () => {
+        return user && !user.isAnonymous;
     };
 
-    const isAuthenticated = () => !!user && !user.isAnonymous;
-
-    // --- UPDATED: More robust auth state handling ---
+    // --- UPDATED: More robust auth state listener effect ---
     useEffect(() => {
+        let isMounted = true; // Track if component is mounted
+
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            if (currentUser) {
-                // User is signed in (either real or anonymous)
-                try {
-                    const profile = await createUserProfileDocument(currentUser);
-                    setUser({ ...currentUser, ...profile });
-                } catch (err) {
-                    console.error("Auth State Error:", err);
+            try {
+                if (currentUser) {
+                    // User is signed in
+                    const userProfile = await createUserProfileDocument(currentUser);
+                    if (isMounted) {
+                        setUser({ ...currentUser, ...userProfile });
+                    }
+                } else {
+                    // No user is signed in, attempt anonymous sign-in
+                    if (isMounted) {
+                        signInAnonymously(auth).catch(err => {
+                            console.error("Anonymous sign-in failed:", err);
+                            setError("Failed to get guest access.");
+                        });
+                    }
+                }
+            } catch (err) {
+                console.error("Error in auth state change:", err);
+                if (isMounted) {
                     setError("An authentication error occurred.");
                     setUser(null);
                 }
-            } else {
-                // No user is signed in, so sign in anonymously.
-                // This will re-trigger onAuthStateChanged.
-                signInAnonymously(auth).catch(err => {
-                    console.error("Anonymous sign-in failed:", err);
-                    setError("Could not start a guest session.");
-                });
+            } finally {
+                if (isMounted) {
+                    setLoading(false);
+                }
             }
-            setLoading(false);
         });
 
-        return () => unsubscribe(); // Cleanup subscription on unmount
+        return () => {
+            isMounted = false;
+            unsubscribe();
+        };
     }, []);
 
 
-    const value = useMemo(() => ({
+    const clearError = () => setError(null);
+
+    const value = {
         user,
         loading,
         error,
@@ -209,111 +232,26 @@ export const AuthProvider = ({ children }) => {
         signInWithEmail,
         signOutUser,
         isAuthenticated,
-        clearError,
-        resetPassword,
-    }), [user, loading, error]);
+        clearError
+    };
 
     return (
         <AuthContext.Provider value={value}>
-            {!loading && children}
+            {children}
         </AuthContext.Provider>
     );
 };
 
-// --- UI COMPONENTS ---
 
-// --- LOGIN FORM ---
-export const EnhancedLoginForm = ({ toggleView, onNavigate, setView }) => {
-    const { signInWithEmail, signInWithGoogle, error, clearError } = useAuth();
-    const [formData, setFormData] = useState({ email: '', password: '' });
-    const [loading, setLoading] = useState(false);
-    const [localError, setLocalError] = useState('');
-
-    const handleInputChange = (e) => {
-        const { id, value } = e.target;
-        setFormData(prev => ({ ...prev, [id]: value }));
-        if (error) clearError();
-        if (localError) setLocalError('');
-    };
-
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setLoading(true);
-        setLocalError('');
-        clearError();
-        const result = await signInWithEmail(formData.email, formData.password);
-        if (result.success) {
-            onNavigate('profile');
-        } else {
-            setLocalError(result.error);
-        }
-        setLoading(false);
-    };
-
-    const handleGoogleLogin = async () => {
-        setLoading(true);
-        clearError();
-        const result = await signInWithGoogle();
-        if (result.success) {
-            onNavigate('profile');
-        }
-        setLoading(false);
-    };
-
-    const displayError = localError || error;
-
-    return (
-        <div className="auth-form-container">
-            <div className="form-header">
-                <h2>Welcome Back</h2>
-                <p>New to NATRA? 
-                    <a href="#signup" onClick={(e) => { e.preventDefault(); toggleView(); }}>
-                        Create an Account
-                    </a>
-                </p>
-            </div>
-            
-            <form onSubmit={handleLogin}>
-                <div className="form-group">
-                    <label htmlFor="email">Email Address</label>
-                    <input type="email" id="email" value={formData.email} onChange={handleInputChange} required disabled={loading} />
-                </div>
-                
-                <div className="form-group">
-                    <label htmlFor="password">Password</label>
-                    <input type="password" id="password" value={formData.password} onChange={handleInputChange} required disabled={loading} />
-                </div>
-                
-                {displayError && <p className="form-error">{displayError}</p>}
-                
-                <div className="form-options">
-                    <button type="button" onClick={() => setView('forgot')} className="link-button">
-                        Forgot Password?
-                    </button>
-                </div>
-                
-                <button type="submit" className="btn btn-primary" disabled={loading}>
-                    {loading ? 'Logging In...' : 'Log In'}
-                </button>
-            </form>
-            
-            <div className="social-divider">
-                <span>Or Log In With</span>
-            </div>
-            
-            <div className="social-buttons">
-                <button className="btn btn-social" onClick={handleGoogleLogin} disabled={loading}>
-                    <GoogleIcon /> Google
-                </button>
-            </div>
-        </div>
-    );
-};
-
-// --- SIGNUP FORM ---
-export const EnhancedSignupForm = ({ toggleView, onNavigate }) => {
+// --- SIGNUP FORM COMPONENT ---
+export const EnhancedSignupForm = ({ toggleView, onNavigate, onSuccess }) => {
     const { signUpWithEmail, signInWithGoogle, error, clearError } = useAuth();
-    const [formData, setFormData] = useState({ firstName: '', lastName: '', email: '', password: '' });
+    const [formData, setFormData] = useState({
+        firstName: '',
+        lastName: '',
+        email: '',
+        password: ''
+    });
     const [loading, setLoading] = useState(false);
     const [localError, setLocalError] = useState('');
 
@@ -338,6 +276,7 @@ export const EnhancedSignupForm = ({ toggleView, onNavigate }) => {
         );
 
         if (result.success) {
+            onSuccess?.();
             onNavigate('profile');
         } else {
             setLocalError(result.error);
@@ -350,12 +289,13 @@ export const EnhancedSignupForm = ({ toggleView, onNavigate }) => {
         clearError();
         const result = await signInWithGoogle();
         if (result.success) {
+            onSuccess?.();
             onNavigate('profile');
         }
         setLoading(false);
     };
 
-    const displayError = localError || error;
+    const displayError = error || localError;
 
     return (
         <div className="auth-form-container">
@@ -415,60 +355,99 @@ export const EnhancedSignupForm = ({ toggleView, onNavigate }) => {
     );
 };
 
-// --- FORGOT PASSWORD FORM ---
-export const ForgotPasswordForm = ({ setView }) => {
-    const { resetPassword } = useAuth(); // Use the context function
-    const [email, setEmail] = useState('');
-    const [message, setMessage] = useState('');
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
 
-    const handlePasswordReset = async (e) => {
+// --- LOGIN FORM COMPONENT ---
+export const EnhancedLoginForm = ({ toggleView, onNavigate, onSuccess }) => {
+    const { signInWithEmail, signInWithGoogle, error, clearError } = useAuth();
+    const [formData, setFormData] = useState({ email: '', password: '' });
+    const [loading, setLoading] = useState(false);
+    const [localError, setLocalError] = useState('');
+
+    const handleInputChange = (e) => {
+        const { id, value } = e.target;
+        setFormData(prev => ({ ...prev, [id]: value }));
+        if (error) clearError();
+        if (localError) setLocalError('');
+    };
+
+    const handleLogin = async (e) => {
         e.preventDefault();
-        setMessage('');
-        setError('');
         setLoading(true);
-        const result = await resetPassword(email);
+        setLocalError('');
+        clearError();
+
+        const result = await signInWithEmail(formData.email, formData.password);
+
         if (result.success) {
-            setMessage(result.message);
+            onSuccess?.();
+            onNavigate('profile');
         } else {
-            setError(result.error);
+            setLocalError(result.error);
         }
         setLoading(false);
     };
 
+    const handleGoogleLogin = async () => {
+        setLoading(true);
+        clearError();
+        const result = await signInWithGoogle();
+        if (result.success) {
+            onSuccess?.();
+            onNavigate('profile');
+        }
+        setLoading(false);
+    };
+
+    const displayError = error || localError;
+
     return (
-        <div className="login-form-container">
-            <h2>Reset Your Password</h2>
-            <p className="form-description">
-                Enter your email to receive a password reset link.
-            </p>
-            <form onSubmit={handlePasswordReset}>
-                <input
-                    type="email"
-                    placeholder="Enter your registered email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                />
-                {error && <p className="error-message">{error}</p>}
-                {message && <p className="success-message">{message}</p>}
-                <button type="submit" disabled={loading}>
-                    {loading ? 'Sending...' : 'Send Reset Link'}
+        <div className="auth-form-container">
+            <div className="form-header">
+                <h2>Welcome Back</h2>
+                <p>New to NATRA? 
+                    <a href="#signup" onClick={(e) => { e.preventDefault(); toggleView(); }}>
+                        Create an Account
+                    </a>
+                </p>
+            </div>
+            
+            <form onSubmit={handleLogin}>
+                <div className="form-group">
+                    <label htmlFor="email">Email Address</label>
+                    <input type="email" id="email" value={formData.email} onChange={handleInputChange} required disabled={loading} />
+                </div>
+                
+                <div className="form-group">
+                    <label htmlFor="password">Password</label>
+                    <input type="password" id="password" value={formData.password} onChange={handleInputChange} required disabled={loading} />
+                </div>
+                
+                {displayError && <p className="form-error">{displayError}</p>}
+                
+                <div className="form-options">
+                    <a href="#forgot">Forgot Password?</a>
+                </div>
+                
+                <button type="submit" className="btn btn-primary" disabled={loading}>
+                    {loading ? 'Logging In...' : 'Log In'}
                 </button>
             </form>
-            <div className="auth-form-links">
-                <p>
-                    <button onClick={() => setView('login')} className="link-button">
-                        &larr; Back to Login
-                    </button>
-                </p>
+            
+            <div className="social-divider">
+                <span>Or Log In With</span>
+            </div>
+            
+            <div className="social-buttons">
+                <button className="btn btn-social" onClick={handleGoogleLogin} disabled={loading}>
+                    <GoogleIcon /> Google
+                </button>
             </div>
         </div>
     );
 };
 
-// --- GOOGLE ICON ---
+
+// --- GOOGLE ICON COMPONENT ---
 const GoogleIcon = () => (
     <svg height="24" width="24" viewBox="0 0 24 24" style={{ marginRight: '8px' }}>
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
