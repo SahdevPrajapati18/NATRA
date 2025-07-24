@@ -1,45 +1,50 @@
-// ForgotPasswordForm.jsx
-import React, { useState } from "react";
-import { useAuth } from "./authHandler.jsx"; // adjust path as needed
+import React, { useState } from 'react';
+import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
+import './ForgotPasswordForm.css'; // Optional: add styling if needed
 
-const ForgotPasswordForm = ({ onNavigate }) => {
-  const { resetPassword, error, clearError } = useAuth();
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState("");
+const ForgotPasswordForm = ({ onBackToLogin }) => {
+    const [email, setEmail] = useState('');
+    const [status, setStatus] = useState({ loading: false, message: '', error: '' });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    clearError();
-    const result = await resetPassword(email);
-    if (result.success) {
-      setStatus(result.message);
-    } else {
-      setStatus(result.error);
-    }
-  };
+    const handleReset = async (e) => {
+        e.preventDefault();
+        setStatus({ loading: true, message: '', error: '' });
 
-  return (
-    <div className="forgot-password-form">
-      <h2>Forgot Password</h2>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="email"
-          placeholder="Enter your registered email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <button type="submit">Send Reset Email</button>
-      </form>
-      {status && <p>{status}</p>}
-      <p style={{ marginTop: "1rem" }}>
-        Remembered?{" "}
-        <button type="button" onClick={() => onNavigate("login")}>
-          Back to Login
-        </button>
-      </p>
-    </div>
-  );
+        const auth = getAuth();
+        try {
+            await sendPasswordResetEmail(auth, email);
+            setStatus({ loading: false, message: 'Password reset email sent! Check your inbox.', error: '' });
+        } catch (error) {
+            setStatus({ loading: false, message: '', error: error.message });
+        }
+    };
+
+    return (
+        <div className="forgot-password-form">
+            <h2>Reset Your Password</h2>
+            <p>Enter your registered email to receive a password reset link.</p>
+
+            <form onSubmit={handleReset}>
+                <input
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                />
+                <button type="submit" disabled={status.loading}>
+                    {status.loading ? 'Sending...' : 'Send Reset Email'}
+                </button>
+            </form>
+
+            {status.message && <p className="success-message">{status.message}</p>}
+            {status.error && <p className="error-message">{status.error}</p>}
+
+            <button onClick={onBackToLogin} className="back-to-login-btn">
+                &larr; Back to Login
+            </button>
+        </div>
+    );
 };
 
 export default ForgotPasswordForm;
