@@ -8,6 +8,7 @@ import {
     signInAnonymously, 
     signInWithCustomToken, 
     signInWithPopup,
+    sendPasswordResetEmail,
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     updateProfile 
@@ -45,6 +46,7 @@ export {
     signInAnonymously, 
     signInWithCustomToken, 
     signInWithPopup,
+    sendPasswordResetEmail,
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     updateProfile,
