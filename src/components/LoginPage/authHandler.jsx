@@ -8,6 +8,7 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
+  sendPasswordResetEmail,
   onAuthStateChanged,
   signOut,
   doc,
@@ -149,6 +150,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  
+  const resetPassword = async (email) => {
+  clearError();
+  try {
+    await sendPasswordResetEmail(auth, email);
+    return { success: true, message: "Password reset email sent!" };
+  } catch (err) {
+    console.error("Reset Password Error:", err);
+    const msgMap = {
+      "auth/user-not-found": "No account found with this email.",
+      "auth/invalid-email": "Invalid email address.",
+    };
+    const msg = msgMap[err.code] || "Failed to send reset email.";
+    setError(msg);
+    return { success: false, error: msg };
+  }
+};
+
   const isAuthenticated = () => !!user && !user.isAnonymous;
 
   // --- HANDLE AUTH STATE CHANGES ---
@@ -182,6 +201,7 @@ export const AuthProvider = ({ children }) => {
     signOutUser,
     isAuthenticated,
     clearError,
+    resetPassword,
   }), [user, loading, error]);
 
   return (
