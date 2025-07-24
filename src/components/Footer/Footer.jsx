@@ -23,7 +23,7 @@ export default function Footer() {
         <footer className="footer">
             <div className="footer-content container">
                 <div className="footer-section about">
-                    <img src="/src/assets/logo.png" alt="NATRA Logo" className="footer-logo" />
+                    <img src="/logo.png" alt="NATRA Logo" className="footer-logo" />
                     <p>A sanctuary where ancient Indian traditions of wellness and hospitality meet contemporary elegance.</p>
                 </div>
 
