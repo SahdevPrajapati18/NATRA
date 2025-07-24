@@ -1,88 +1,64 @@
 import React, { useState } from 'react';
-import { EnhancedSignupForm, EnhancedLoginForm } from './authHandler.jsx';
-import ForgotPasswordForm from './ForgotPasswordForm.jsx'; // ✅ Import
-import './LoginPage.css';
+import { auth, signInWithEmailAndPassword } from './firebase.jsx'; // Ensure these are correctly exported
+import './LoginForm.css';
 
-// Showcase Panel Component
-const ShowcasePanel = ({ onNavigate }) => (
-    <div className="auth-showcase">
-        <div className="auth-showcase-content">
-            <button 
-                onClick={() => onNavigate('home')} 
-                className="back-to-website-btn"
-                aria-label="Back to Home"
-            >
-                &larr; Back to Home
-            </button>
-            <div className="auth-logo">
-                <img src="/logo.png" alt="NATRA Logo" />
-            </div>
-            <h1>A Divine Legacy</h1>
-            <p className="showcase-description">
-                Enter a realm of timeless elegance, where every moment is crafted to perfection. 
-                Join us and discover a heritage of unparalleled luxury.
-            </p>
-            <div className="showcase-features">
-                <div className="feature-item">
-                    <span className="feature-icon">🏨</span>
-                    <span>Exclusive Accommodations</span>
-                </div>
-                <div className="feature-item">
-                    <span className="feature-icon">🌟</span>
-                    <span>Premium Experiences</span>
-                </div>
-                <div className="feature-item">
-                    <span className="feature-icon">🎯</span>
-                    <span>Personalized Service</span>
-                </div>
-            </div>
-        </div>
-    </div>
-);
+export function EnhancedLoginForm({ toggleView, onNavigate, setView }) {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
 
-// Main Enhanced LoginPage Component
-export default function EnhancedLoginPage({ onNavigate }) {
-    const [view, setView] = useState('login'); // login | signup | forgot
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
 
-    const toggleView = () => {
-        setView(current => current === 'signup' ? 'login' : 'signup');
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            onNavigate('home'); // Navigate to home or dashboard
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
-        <div className="auth-page-container">
-            <ShowcasePanel onNavigate={onNavigate} />
+        <div className="login-form-container">
+            <h2>Login to Your Account</h2>
+            <form onSubmit={handleLogin}>
+                <input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                />
+                <input
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                />
 
-            <div className="auth-form-area">
-                <div className="auth-form-wrapper">
-                    {view === 'signup' && (
-                        <EnhancedSignupForm
-                            toggleView={toggleView}
-                            onNavigate={onNavigate}
-                        />
-                    )}
+                {error && <p className="error-message">{error}</p>}
 
-                    {view === 'login' && (
-                        <EnhancedLoginForm
-                            toggleView={toggleView}
-                            onNavigate={onNavigate}
-                            setView={setView} // ✅ Pass for Forgot Password link
-                        />
-                    )}
+                <button type="submit" disabled={loading}>
+                    {loading ? 'Logging in...' : 'Login'}
+                </button>
+            </form>
 
-                    {view === 'forgot' && (
-                        <ForgotPasswordForm
-                            onBackToLogin={() => setView('login')}
-                        />
-                    )}
-                </div>
-
-                <div className="auth-footer-links">
-                    <a href="#terms" onClick={(e) => e.preventDefault()}>Terms of Service</a>
-                    <span>•</span>
-                    <a href="#privacy" onClick={(e) => e.preventDefault()}>Privacy Policy</a>
-                    <span>•</span>
-                    <a href="#help" onClick={(e) => e.preventDefault()}>Help</a>
-                </div>
+            <div className="auth-form-links">
+                <p>
+                    Don’t have an account?{' '}
+                    <button onClick={toggleView} className="link-button">Sign Up</button>
+                </p>
+                <p>
+                    <button onClick={() => setView('forgot')} className="link-button">
+                        Forgot Password?
+                    </button>
+                </p>
             </div>
         </div>
     );
