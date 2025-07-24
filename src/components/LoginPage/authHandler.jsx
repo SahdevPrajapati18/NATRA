@@ -195,10 +195,7 @@ export const AuthProvider = ({ children }) => {
                 } else {
                     // No user is signed in, attempt anonymous sign-in
                     if (isMounted) {
-                        signInAnonymously(auth).catch(err => {
-                            console.error("Anonymous sign-in failed:", err);
-                            setError("Failed to get guest access.");
-                        });
+                        setUser(null);
                     }
                 }
             } catch (err) {
