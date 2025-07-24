@@ -11,10 +11,11 @@ import {
     sendPasswordResetEmail,
     onAuthStateChanged,
     signOut,
+    signInAnonymously, // Ensure signInAnonymously is imported
     doc,
     setDoc,
     getDoc,
-} from "./firebase.jsx";
+} from "./firebase.jsx"; // Corrected file extension
 
 // --- CONTEXT ---
 const AuthContext = createContext();
@@ -44,8 +45,10 @@ export const AuthProvider = ({ children }) => {
             displayName ||
             (email ? email.split("@")[0] : "");
 
-        finalDisplayName =
-            finalDisplayName.charAt(0).toUpperCase() + finalDisplayName.slice(1);
+        if(finalDisplayName) {
+            finalDisplayName =
+                finalDisplayName.charAt(0).toUpperCase() + finalDisplayName.slice(1);
+        }
 
         const baseProfile = {
             uid,
@@ -141,7 +144,7 @@ export const AuthProvider = ({ children }) => {
     const signOutUser = async () => {
         try {
             await signOut(auth);
-            setUser(null); // Update immediately for smoother UX
+            setUser(null); // This will trigger onAuthStateChanged to sign in anonymously
             return { success: true };
         } catch (err) {
             console.error("Sign-out error:", err);
@@ -169,10 +172,11 @@ export const AuthProvider = ({ children }) => {
 
     const isAuthenticated = () => !!user && !user.isAnonymous;
 
-    // --- HANDLE AUTH STATE CHANGES ---
+    // --- UPDATED: More robust auth state handling ---
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             if (currentUser) {
+                // User is signed in (either real or anonymous)
                 try {
                     const profile = await createUserProfileDocument(currentUser);
                     setUser({ ...currentUser, ...profile });
@@ -182,13 +186,19 @@ export const AuthProvider = ({ children }) => {
                     setUser(null);
                 }
             } else {
-                setUser(null);
+                // No user is signed in, so sign in anonymously.
+                // This will re-trigger onAuthStateChanged.
+                signInAnonymously(auth).catch(err => {
+                    console.error("Anonymous sign-in failed:", err);
+                    setError("Could not start a guest session.");
+                });
             }
             setLoading(false);
         });
 
-        return unsubscribe;
+        return () => unsubscribe(); // Cleanup subscription on unmount
     }, []);
+
 
     const value = useMemo(() => ({
         user,
@@ -205,7 +215,7 @@ export const AuthProvider = ({ children }) => {
 
     return (
         <AuthContext.Provider value={value}>
-            {children}
+            {!loading && children}
         </AuthContext.Provider>
     );
 };
