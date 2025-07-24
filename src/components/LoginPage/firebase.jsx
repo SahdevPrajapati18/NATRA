@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import { initializeApp } from "firebase/app";
 =======
 
