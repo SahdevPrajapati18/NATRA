@@ -1,0 +1,110 @@
+/* --- More Page --- */
+.more-page {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    padding-bottom: var(--space-3xl);
+  }
+  
+  .more-hero {
+    height: clamp(40vh, 60vh, 70vh);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+  }
+  
+  .more-hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to top, var(--hero-overlay-start) 5%, rgba(0,0,0,0.5) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-md);
+  }
+  
+  .more-hero-title {
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    font-weight: 700;
+    color: var(--hero-text);
+    letter-spacing: 0.05em;
+    line-height: 1.1;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    margin: 0;
+  }
+  
+  .more-content {
+    padding-top: var(--space-3xl);
+  }
+  
+  .more-intro {
+    font-size: clamp(1rem, 2.5vw, 1.125rem);
+    line-height: 1.8;
+    color: var(--text-secondary);
+    max-width: min(800px, 90vw);
+    margin: 0 auto var(--space-2xl) auto;
+    text-align: center;
+  }
+  
+  .more-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-xl);
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  @media (min-width: 768px) {
+    .more-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  
+  .experience-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-primary);
+    border-radius: 0.75rem;
+    padding: var(--space-xl);
+    text-align: center;
+    box-shadow: 0 4px 25px var(--shadow-color);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .experience-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 30px var(--shadow-color);
+  }
+  
+  .experience-card-icon {
+    display: inline-flex;
+    padding: var(--space-md);
+    background-color: var(--bg-primary);
+    border-radius: 50%;
+    margin-bottom: var(--space-lg);
+  }
+  
+  .experience-card-icon svg {
+    width: 32px;
+    height: 32px;
+    color: var(--accent-primary);
+  }
+  
+  .experience-card-title {
+    font-size: clamp(1.375rem, 3vw, 1.75rem);
+    color: var(--text-primary);
+    margin: 0 0 var(--space-sm) 0;
+  }
+  
+  .experience-card-description {
+    color: var(--text-muted);
+    line-height: 1.6;
+    font-size: clamp(0.875rem, 2vw, 1rem);
+  }
+  

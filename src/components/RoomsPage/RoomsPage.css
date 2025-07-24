@@ -1,0 +1,228 @@
+/* =================================================================
+   ROOMS PAGE STYLES
+   ================================================================= */
+
+   .rooms-page {
+    background-color: var(--bg-primary);
+    padding-bottom: var(--space-3xl);
+}
+
+/* --- Hero Section --- */
+.rooms-hero {
+    height: clamp(40vh, 50vh, 60vh);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+.rooms-hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to top, var(--bg-primary) 5%, rgba(0,0,0,0.5) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rooms-hero-title {
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    font-weight: 700;
+    color: var(--hero-text);
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* --- Content & Back Button --- */
+.rooms-content {
+    padding-top: var(--space-3xl);
+}
+
+.back-button-container {
+    margin-bottom: var(--space-2xl);
+}
+
+.back-to-destinations-btn {
+    /* This is a secondary button style */
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    background-color: transparent;
+    border: 1px solid var(--border-primary);
+    color: var(--text-secondary);
+    padding: 0.6rem 1.2rem;
+    border-radius: 9999px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.back-to-destinations-btn:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    transform: translateY(-2px);
+}
+
+/* --- Room Card Layout --- */
+.room-card {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+    background-color: var(--bg-card);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 10px 30px var(--shadow-color);
+    margin-bottom: var(--space-3xl);
+}
+
+@media (min-width: 1024px) {
+    .room-card {
+        grid-template-columns: 3fr 2fr; /* Image takes more space */
+    }
+}
+
+.room-card-image {
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+}
+
+.room-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.room-card:hover .room-card-image img {
+    transform: scale(1.05);
+}
+
+.room-card-details {
+    padding: var(--space-xl);
+    display: flex;
+    flex-direction: column;
+}
+
+.room-card-title {
+    font-size: clamp(1.75rem, 5vw, 2.25rem);
+    color: var(--text-primary);
+    margin: 0 0 var(--space-sm) 0;
+}
+
+.room-card-description {
+    font-size: clamp(1rem, 2.5vw, 1.125rem);
+    line-height: 1.8;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-xl);
+}
+
+/* --- Card Info & Amenities --- */
+.room-card-info {
+    display: flex;
+    gap: var(--space-xl);
+    margin-bottom: var(--space-xl);
+    border-top: 1px solid var(--border-primary);
+    border-bottom: 1px solid var(--border-primary);
+    padding: var(--space-lg) 0;
+}
+
+.room-card-info div {
+    flex-basis: 50%;
+}
+
+.room-card-info span {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.room-card-info p {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--accent-primary);
+    margin: var(--space-xs) 0 0 0;
+}
+
+.room-card-amenities h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 var(--space-md) 0;
+}
+
+.room-card-amenities ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--space-xl) 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--space-sm);
+}
+
+.room-card-amenities li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--text-secondary);
+}
+
+.room-card-amenities svg {
+    color: var(--accent-primary);
+    flex-shrink: 0;
+}
+
+/* --- Card Button --- */
+.room-card-button {
+    /* This is a primary button style */
+    background-color: var(--accent-primary);
+    color: var(--bg-secondary);
+    padding: clamp(0.75rem, 2vw, 1rem) clamp(1.5rem, 4vw, 2.5rem);
+    border-radius: 9999px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    font-size: clamp(0.875rem, 2vw, 1rem);
+    white-space: nowrap;
+    align-self: flex-start;
+    margin-top: auto;
+    /* Pushes button to the bottom */
+}
+
+.room-card-button:hover {
+    background-color: var(--accent-secondary);
+    transform: scale(1.05);
+}
+.back-button-container {
+  margin-bottom: var(--space-xl);
+}
+
+.back-to-destinations-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background-color: transparent;
+  border: 1px solid var(--border-primary);
+  color: var(--text-secondary);
+  padding: 0.6rem 1.2rem;
+  border-radius: 9999px; /* Pill shape */
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.back-to-destinations-btn:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px var(--shadow-color);
+}

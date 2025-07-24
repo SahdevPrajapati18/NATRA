@@ -1,0 +1,251 @@
+
+/* =========================================== */
+/* --- 1. GENERAL PAGE & HERO SETUP --- */
+/* =========================================== */
+
+.single-room-page {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    padding-bottom: var(--space-2xl);
+}
+
+/* Hero section now mirrors the HotelsPage hero */
+.srp-hero {
+    height: clamp(40vh, 60vh, 70vh);
+    position: relative;
+    display: flex;
+    flex-direction: column; /* To stack title and price */
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed; /* Parallax effect */
+    padding: var(--space-md);
+}
+
+/* Overlay now mirrors the HotelsPage overlay */
+.srp-hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to top, var(--hero-overlay-start) 5%, rgba(0,0,0,0.5) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-md);
+}
+
+.srp-hero-content {
+    position: relative; /* To appear above the overlay */
+    z-index: 2;
+    color: var(--hero-text, #ffffff);
+}
+
+.srp-hero-title {
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    line-height: 1.1;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    
+    margin-top: var(--space-3xl);
+}
+
+.srp-hero-price {
+    font-size: clamp(1rem, 3vw, 1.25rem);
+    font-weight: 400;
+    margin-top: var(--space-sm);
+    opacity: 0.9;
+    margin-bottom: var(--space-lg);
+}
+
+/* =========================================== */
+/* --- 2. MAIN CONTENT & LAYOUT --- */
+/* =========================================== */
+
+.srp-content-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--space-lg);
+}
+
+.srp-body-content {
+    padding-top: var(--space-3xl);
+    display: grid;
+    gap: var(--space-3xl);
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 1024px) {
+    .srp-body-content {
+        /* Details on the left, sticky booking on the right */
+        grid-template-columns: 1.8fr 1fr;
+    }
+}
+
+/* =========================================== */
+/* --- 3. BACK BUTTON & DETAILS --- */
+/* =========================================== */
+
+/* This container now holds the back button */
+.srp-navigation {
+    margin-bottom: var(--space-xl);
+}
+
+/* Styled like the primary action button on HotelsPage */
+.srp-back-btn {
+    display: flex;
+    justify-content: flex-start;
+    gap: var(--space-xs);
+    background-color: transparent;
+    border: 1px solid var(--border-primary);
+    color: var(--text-secondary);
+    padding: 0.6rem 1.2rem;
+    border-radius: 9999px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    
+}
+
+.srp-back-btn:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    transform: translateY(-2px);
+}
+
+.srp-details-main h2 {
+    font-size: clamp(1.75rem, 5vw, 2.25rem);
+    font-weight: 600;
+    color: var(--accent-primary); /* Uses accent color like hotel titles */
+    margin: 0 0 var(--space-lg) 0;
+    line-height: 1.2;
+}
+
+.srp-details-main p {
+    font-size: clamp(1rem, 2.5vw, 1.125rem);
+    line-height: 1.8;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-xl);
+}
+
+.srp-details-main h3 {
+    font-size: clamp(1.5rem, 4vw, 1.75rem);
+    font-weight: 600;
+    margin: var(--space-xl) 0 var(--space-md) 0;
+}
+
+/* =========================================== */
+/* --- 4. AMENITIES & GALLERY --- */
+/* =========================================== */
+
+/* Styled as a card, consistent with hotel-card */
+.srp-amenities-card,
+.srp-gallery-card {
+    background: var(--bg-card, #ffffff);
+    border-radius: 0.75rem;
+    padding: var(--space-xl);
+    box-shadow: 0 10px 30px var(--shadow-color, rgba(0,0,0,0.1));
+    margin-bottom: var(--space-2xl);
+}
+
+.srp-amenities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-lg);
+}
+
+.srp-amenity-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    color: var(--text-secondary);
+}
+
+.srp-amenity-item svg {
+    color: var(--accent-primary);
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+}
+
+.srp-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-md);
+}
+
+.srp-gallery-item {
+    border-radius: 0.5rem; /* Slightly smaller radius for items inside a card */
+    overflow: hidden;
+    aspect-ratio: 4 / 3;
+}
+
+.srp-gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.srp-gallery-item:hover img {
+    transform: scale(1.05); /* Same hover effect as hotel images */
+}
+
+/* =========================================== */
+/* --- 5. BOOKING WIDGET --- */
+/* =========================================== */
+
+.srp-booking-wrapper {
+    position: sticky;
+    top: 2rem;
+    height: fit-content;
+}
+
+/* Styled as a primary card */
+.booking-widget {
+    background: var(--bg-card, #ffffff);
+    border-radius: 0.75rem;
+    padding: var(--space-xl);
+    box-shadow: 0 10px 30px var(--shadow-color, rgba(0,0,0,0.1));
+}
+
+.booking-widget h3 {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-xl);
+}
+
+.booking-form-group {
+    margin-bottom: var(--space-md);
+}
+
+.booking-form-group label {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-bottom: var(--space-xs);
+}
+
+.date-picker input,
+.guest-picker select {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    font-size: 1rem;
+    border: 1px solid var(--border-primary, #ddd);
+    border-radius: 8px;
+    transition: border-color 0.3s ease;
+}
+
+.date-picker input:focus,
+.guest-picker select:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
