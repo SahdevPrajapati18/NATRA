@@ -1,47 +1,45 @@
 import React, { useState } from 'react';
-import { getAuth, sendPasswordResetEmail } from 'firebase/auth';
-import './ForgotPasswordForm.css'; // Optional: add styling if needed
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from './firebase'; 
+import './ForgetPasswordForm.css';// adjust path based on your structure
 
 const ForgotPasswordForm = ({ onBackToLogin }) => {
     const [email, setEmail] = useState('');
-    const [status, setStatus] = useState({ loading: false, message: '', error: '' });
+    const [message, setMessage] = useState('');
+    const [error, setError] = useState('');
 
-    const handleReset = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setStatus({ loading: true, message: '', error: '' });
+        setMessage('');
+        setError('');
 
-        const auth = getAuth();
         try {
             await sendPasswordResetEmail(auth, email);
-            setStatus({ loading: false, message: 'Password reset email sent! Check your inbox.', error: '' });
-        } catch (error) {
-            setStatus({ loading: false, message: '', error: error.message });
+            setMessage('Password reset email sent! Check your inbox.');
+        } catch (err) {
+            setError(err.message);
         }
     };
 
     return (
-        <div className="forgot-password-form">
+        <div className="auth-form">
             <h2>Reset Your Password</h2>
-            <p>Enter your registered email to receive a password reset link.</p>
-
-            <form onSubmit={handleReset}>
-                <input
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
+            <form onSubmit={handleSubmit}>
+                <input 
+                    type="email" 
+                    placeholder="Enter your email" 
+                    value={email} 
+                    onChange={(e) => setEmail(e.target.value)} 
+                    required 
                 />
-                <button type="submit" disabled={status.loading}>
-                    {status.loading ? 'Sending...' : 'Send Reset Email'}
-                </button>
+                <button type="submit">Send Reset Email</button>
             </form>
 
-            {status.message && <p className="success-message">{status.message}</p>}
-            {status.error && <p className="error-message">{status.error}</p>}
+            {message && <p className="success-message">{message}</p>}
+            {error && <p className="error-message">{error}</p>}
 
-            <button onClick={onBackToLogin} className="back-to-login-btn">
-                &larr; Back to Login
+            <button onClick={onBackToLogin} className="back-link">
+                ← Back to Login
             </button>
         </div>
     );
