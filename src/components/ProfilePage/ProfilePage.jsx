@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../LoginPage/authHandler.jsx'; // Corrected Path
 import { db, appId } from '../LoginPage/firebase.jsx'; // Corrected Path
+import gsap from 'gsap';
 
 import './ProfilePage.css';
 
