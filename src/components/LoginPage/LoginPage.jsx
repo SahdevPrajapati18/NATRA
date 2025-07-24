@@ -14,7 +14,7 @@ const ShowcasePanel = ({ onNavigate }) => (
                 &larr; Back to Home
             </button>
             <div className="auth-logo">
-                <img src="/src/assets/logo.png" alt="NATRA Logo" />
+                <img src="/logo.png" alt="NATRA Logo" />
             </div>
             <h1>A Divine Legacy</h1>
             <p className="showcase-description">
