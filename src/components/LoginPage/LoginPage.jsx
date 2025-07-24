@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { EnhancedSignupForm, EnhancedLoginForm } from './authHandler.jsx';
+import ForgotPasswordForm from './ForgotPasswordForm.jsx'; // ✅ Import
 import './LoginPage.css';
 
 // Showcase Panel Component
@@ -41,32 +42,40 @@ const ShowcasePanel = ({ onNavigate }) => (
 
 // Main Enhanced LoginPage Component
 export default function EnhancedLoginPage({ onNavigate }) {
-    // --- UPDATED: Default view is now 'login' ---
-    const [view, setView] = useState('login');
+    const [view, setView] = useState('login'); // login | signup | forgot
 
     const toggleView = () => {
-        setView(currentView => currentView === 'signup' ? 'login' : 'signup');
+        setView(current => current === 'signup' ? 'login' : 'signup');
     };
 
     return (
         <div className="auth-page-container">
             <ShowcasePanel onNavigate={onNavigate} />
-            
+
             <div className="auth-form-area">
                 <div className="auth-form-wrapper">
-                    {view === 'signup' ? (
-                        <EnhancedSignupForm 
-                            toggleView={toggleView} 
-                            onNavigate={onNavigate}
-                        />
-                    ) : (
-                        <EnhancedLoginForm 
-                            toggleView={toggleView} 
+                    {view === 'signup' && (
+                        <EnhancedSignupForm
+                            toggleView={toggleView}
                             onNavigate={onNavigate}
                         />
                     )}
+
+                    {view === 'login' && (
+                        <EnhancedLoginForm
+                            toggleView={toggleView}
+                            onNavigate={onNavigate}
+                            setView={setView} // ✅ Pass for Forgot Password link
+                        />
+                    )}
+
+                    {view === 'forgot' && (
+                        <ForgotPasswordForm
+                            onBackToLogin={() => setView('login')}
+                        />
+                    )}
                 </div>
-                
+
                 <div className="auth-footer-links">
                     <a href="#terms" onClick={(e) => e.preventDefault()}>Terms of Service</a>
                     <span>•</span>
